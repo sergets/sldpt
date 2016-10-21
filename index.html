@@ -1,0 +1,98 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+        <meta http-equiv="Content-type" content="text/html;charset=utf-8"/>
+        <script type="text/javascript" src="https://yastatic.net/jquery/2.2.0/jquery.min.js"></script>
+        <script type="text/javascript" src="lib/simpleHighlight.js"></script>
+        <style>
+            body {
+                margin: 0;
+                text-align: center;
+            }
+        
+            .input {
+                display: inline-block;
+                padding: 3px;
+                width: 90%;
+                text-align: left;
+                margin: 10px;
+                border: 1px solid rgba(0,0,0,0.5);
+                border-radius: 3px;
+                outline: none;
+                box-sizing: border-box;
+                font-size: 25px;
+                font-family: serif;
+            }
+            
+            #results {
+                font: 35px serif;
+            }
+            
+            img {
+                margin: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <img src="https://pbs.twimg.com/profile_images/378800000450922402/1c794a39d4d6b974cad41486fff049e4.png" width="50" height="50"/>
+        <div id="number" class="input" contentEditable="true">3x1</div>
+        <input class="input" id="street" placehoder="Улица" value="">
+        <div id="results"></div>
+        <script type="text/javascript"> 
+            var calc = function() { return ''; },
+                alphabet = Array.apply(Array, new Array(32)).map(function(_, i) { return String.fromCharCode(['а'.charCodeAt(0) + i]); });
+                
+            alphabet.splice(6, 0, 'ё');
+            //console.log(alphabet);
+            
+            $('#street').on('input keyup', update);
+        
+            simpleHighlight($('#number')[0], {
+               'x(\\d+)' : function(x, num) {
+                   return '<i>x</i><sub>' + num + '</sub>';
+               }
+            }, function(expr) {
+                var exprRegExp = /((?:[x+\-*\/\d\(\)]\s*)+)|((?:[^x+\-*\/\d\(\)]\s*)+)/g,
+                   // textRegExp = /[\sx+\-*\/\d\(\)]+/g;
+                    
+                    matches = [], match;
+                while(match = exprRegExp.exec(expr)) {
+                    matches.push(match[1]?
+                        match[1]
+                            .replace(/\s+/g, '')
+                            .replace(/x(\d+)/g, function(all, n) { return 'f(' + n + ')'; })
+                            .replace(/(\d)f/g, function(all, n) { return n + '*f'; }) 
+                            .replace(/(\d)\(/g, function(all, n) { return n + '*('; })
+                            .replace(/\)f/g, ')*f') 
+                            .replace(/\)\(/g, ')*('):
+ 
+                        '\'' + match[2] + '\'');
+                }
+                try {
+                    calc = new Function('f', 'return String(' + matches.join(') + String(') + ')');
+                    update();
+                } catch(e) {
+                    notifyError();
+                }
+            });
+            
+            function getLetterPos(street, n) {
+                return alphabet.indexOf(street.replace(/\s/g, '')[n - 1].toLowerCase()) + 1;
+            }
+   
+            function update() {
+                try {
+                    $('#results').text(calc(getLetterPos.bind(null, $('#street').val())));
+                } catch(e) {
+                    notifyError();
+                }
+            }
+            
+            function notifyError() {
+                $('#results').text('...');
+            }
+            
+            
+        </script>
+    </body>
+</html>
